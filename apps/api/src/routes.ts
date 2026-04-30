@@ -8,6 +8,7 @@ import { FastifyInstance, FastifyReply } from "fastify";
 import { z } from "zod";
 import { config } from "./config.js";
 import { db } from "./db.js";
+import { moveFile } from "./file-utils.js";
 import { nextAvailablePath, readDurationSeconds, statusForLibrary } from "./media.js";
 import { parseId, userVideoLibrarySchema, userVideoStatusSchema } from "./schemas.js";
 import { Library, PlatformRow } from "./types.js";
@@ -336,11 +337,10 @@ async function preparePendingJobOutput(params: {
   const resolvedProcessingRoot = path.resolve(processingRoot);
   if (!resolvedOutput.startsWith(resolvedProcessingRoot + path.sep)) {
     const targetPath = await nextAvailablePath("", path.join(processingRoot, path.basename(params.outputPath)));
-    appendJobLog(params.jobId, "处理结果复制到 NAS 中");
-    await fs.copyFile(params.outputPath, targetPath);
-    await fs.rm(params.outputPath, { force: true }).catch(() => undefined);
+    appendJobLog(params.jobId, "处理结果移动到待确认目录");
+    await moveFile(params.outputPath, targetPath);
     stagedPath = targetPath;
-    appendJobLog(params.jobId, "处理结果已写入 NAS");
+    appendJobLog(params.jobId, "处理结果已写入待确认目录");
   }
 
   await fs.utimes(stagedPath, sourceStat.mtime, sourceStat.mtime);
@@ -369,7 +369,7 @@ async function confirmPendingJobOutput(job: ProcessingJobRow) {
   const targetRoot = rootDirForLibrary("processed");
   await fs.mkdir(targetRoot, { recursive: true });
   const targetPath = await nextAvailablePath("", path.join(targetRoot, job.output_file_name || path.basename(currentPath)));
-  await fs.rename(currentPath, targetPath);
+  await moveFile(currentPath, targetPath);
   await fs.utimes(targetPath, sourceStat.mtime, sourceStat.mtime);
 
   const renamed = await renameFileForRule({

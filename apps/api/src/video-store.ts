@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { config } from "./config.js";
 import { db } from "./db.js";
+import { moveFile } from "./file-utils.js";
 import {
   buildManagedFileName,
   nextAvailablePath,
@@ -103,7 +104,7 @@ export async function renameFileForRule(params: {
   const targetPath = await nextAvailablePath(params.filePath, desiredPath);
 
   if (targetPath !== params.filePath) {
-    await fs.rename(params.filePath, targetPath);
+    await moveFile(params.filePath, targetPath);
   }
 
   const nextStat = await fs.stat(targetPath);
@@ -150,7 +151,7 @@ export async function moveStoredVideoToLibrary(videoId: number, nextLibrary: Lib
   const targetRoot = rootDirForLibrary(nextLibrary);
   await fs.mkdir(targetRoot, { recursive: true });
   const targetPath = await nextAvailablePath(currentPath, path.join(targetRoot, video.file_name));
-  await fs.rename(currentPath, targetPath);
+  await moveFile(currentPath, targetPath);
 
   const moved = await renameFileForRule({
     library: nextLibrary,
