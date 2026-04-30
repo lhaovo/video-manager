@@ -1,0 +1,24 @@
+services:
+  video-manager:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: video-manager
+    restart: unless-stopped
+    ports:
+      - "5333:5333"
+    environment:
+      HOST: 127.0.0.1
+      PORT: 8333
+      WEB_ORIGIN: http://localhost:5333
+      DATABASE_PATH: /data/video-manager.db
+      VSR_API_URL: http://host.docker.internal:8332
+      VIDEO_UNPROCESSED_DIR: /videos/unprocessed
+      VIDEO_PROCESSING_DIR: /videos/processing
+      VIDEO_ARCHIVED_DIR: /videos/archived
+      VIDEO_PROCESSED_DIR: /videos/processed
+    volumes:
+      - ./data:/data
+      - /mnt/video-manager:/videos
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

@@ -1,0 +1,8 @@
+node_modules
+apps/api/dist
+apps/web/dist
+data
+.git
+.env
+npm-debug.log*
+docker-compose.override.yml
