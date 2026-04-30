@@ -2,6 +2,7 @@ import "dotenv/config";
 import path from "node:path";
 
 const rootDir = path.resolve(new URL("../../..", import.meta.url).pathname);
+const localDataDir = path.resolve(rootDir, "data");
 
 export const config = {
   host: process.env.HOST ?? "0.0.0.0",
@@ -11,7 +12,7 @@ export const config = {
   vsrApiUrl: process.env.VSR_API_URL ?? "http://127.0.0.1:8000",
   videoDirs: {
     unprocessed: process.env.VIDEO_UNPROCESSED_DIR ?? "/mnt/video-manager/unprocessed",
-    processing: process.env.VIDEO_PROCESSING_DIR ?? "/mnt/video-manager/processing",
+    processing: process.env.VIDEO_PROCESSING_DIR ?? path.join(localDataDir, "processing"),
     archived: process.env.VIDEO_ARCHIVED_DIR ?? "/mnt/video-manager/archived",
     processed: process.env.VIDEO_PROCESSED_DIR ?? "/mnt/video-manager/processed"
   }

@@ -14,11 +14,13 @@ services:
       DATABASE_PATH: /data/video-manager.db
       VSR_API_URL: http://host.docker.internal:8332
       VIDEO_UNPROCESSED_DIR: /videos/unprocessed
-      VIDEO_PROCESSING_DIR: /videos/processing
+      VIDEO_PROCESSING_DIR: /data/processing
       VIDEO_ARCHIVED_DIR: /videos/archived
       VIDEO_PROCESSED_DIR: /videos/processed
     volumes:
       - ./data:/data
-      - /mnt/video-manager:/videos
+      - /mnt/video-manager/unprocessed:/videos/unprocessed
+      - /mnt/video-manager/archived:/videos/archived
+      - /mnt/video-manager/processed:/videos/processed
     extra_hosts:
       - "host.docker.internal:host-gateway"

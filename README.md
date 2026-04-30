@@ -40,12 +40,18 @@ NAS 挂载目录默认是：
 ```text
 /mnt/video-manager/
   unprocessed/  未处理原视频
-  processing/   处理结果待确认
   archived/     已处理原视频归档
   processed/    已确认的成品视频
 ```
 
-数据库只保存库类型和相对路径，实际文件以 NAS 目录为准。
+处理中/待确认结果不再写入 NAS，默认放在本机本地目录，避免处理过程中的临时文件和半成品视频持续触发 NAS 同步：
+
+```text
+Docker: ./data/processing -> /data/processing
+本地开发: ./data/processing
+```
+
+数据库只保存库类型和相对路径。未处理、归档、已处理文件以 NAS 目录为准；处理中结果以本机处理目录为准。
 
 ## 依赖服务
 
@@ -110,12 +116,14 @@ environment:
   DATABASE_PATH: /data/video-manager.db
   VSR_API_URL: http://host.docker.internal:8332
   VIDEO_UNPROCESSED_DIR: /videos/unprocessed
-  VIDEO_PROCESSING_DIR: /videos/processing
+  VIDEO_PROCESSING_DIR: /data/processing
   VIDEO_ARCHIVED_DIR: /videos/archived
   VIDEO_PROCESSED_DIR: /videos/processed
 volumes:
   - ./data:/data
-  - /mnt/video-manager:/videos
+  - /mnt/video-manager/unprocessed:/videos/unprocessed
+  - /mnt/video-manager/archived:/videos/archived
+  - /mnt/video-manager/processed:/videos/processed
 ```
 
 ## 本地开发
@@ -139,7 +147,7 @@ HOST=0.0.0.0
 PORT=3001
 DATABASE_PATH=./data/video-manager.db
 VIDEO_UNPROCESSED_DIR=/mnt/video-manager/unprocessed
-VIDEO_PROCESSING_DIR=/mnt/video-manager/processing
+VIDEO_PROCESSING_DIR=./data/processing
 VIDEO_ARCHIVED_DIR=/mnt/video-manager/archived
 VIDEO_PROCESSED_DIR=/mnt/video-manager/processed
 WEB_ORIGIN=http://localhost:5173

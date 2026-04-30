@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-mkdir -p /data /videos/unprocessed /videos/processing /videos/archived /videos/processed
+mkdir -p /data/processing /videos/unprocessed /videos/archived /videos/processed
 
 node /app/apps/api/dist/server.js &
 api_pid=$!

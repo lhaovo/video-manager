@@ -26,7 +26,7 @@ ENV NODE_ENV=production \
     DATABASE_PATH=/data/video-manager.db \
     VSR_API_URL=http://host.docker.internal:8332 \
     VIDEO_UNPROCESSED_DIR=/videos/unprocessed \
-    VIDEO_PROCESSING_DIR=/videos/processing \
+    VIDEO_PROCESSING_DIR=/data/processing \
     VIDEO_ARCHIVED_DIR=/videos/archived \
     VIDEO_PROCESSED_DIR=/videos/processed
 
@@ -37,7 +37,7 @@ COPY --from=builder /app/apps/web/dist /usr/share/nginx/html
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 COPY docker/entrypoint.sh /usr/local/bin/video-manager-entrypoint
 
-RUN mkdir -p /data /videos/unprocessed /videos/processing /videos/archived /videos/processed \
+RUN mkdir -p /data/processing /videos/unprocessed /videos/archived /videos/processed \
   && chmod +x /usr/local/bin/video-manager-entrypoint
 
 EXPOSE 5333
