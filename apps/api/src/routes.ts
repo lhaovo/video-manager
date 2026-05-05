@@ -8,7 +8,7 @@ import { FastifyInstance, FastifyReply } from "fastify";
 import { z } from "zod";
 import { config } from "./config.js";
 import { db } from "./db.js";
-import { moveFile } from "./file-utils.js";
+import { moveFile, statFile } from "./file-utils.js";
 import { nextAvailablePath, readDurationSeconds, statusForLibrary } from "./media.js";
 import { parseId, userVideoLibrarySchema, userVideoStatusSchema } from "./schemas.js";
 import { Library, PlatformRow } from "./types.js";
@@ -81,7 +81,7 @@ let queueRunning = false;
 const activeFfmpegProcesses = new Map<number, ReturnType<typeof spawn>>();
 
 async function sendVideoFile(reply: FastifyReply, filePath: string, fileName: string, range?: string, disposition: "inline" | "attachment" = "inline") {
-  const stat = await fs.stat(filePath);
+  const stat = await statFile(filePath);
   const fileSize = stat.size;
   const contentType = contentTypes[path.extname(filePath).toLowerCase()] ?? "application/octet-stream";
 
@@ -328,7 +328,7 @@ async function preparePendingJobOutput(params: {
   jobId: number;
 }) {
   const inputPath = fullPathForVideo(params.source);
-  const sourceStat = await fs.stat(inputPath);
+  const sourceStat = await statFile(inputPath);
   const processingRoot = rootDirForLibrary("processing");
   await fs.mkdir(processingRoot, { recursive: true });
 
@@ -364,7 +364,7 @@ async function confirmPendingJobOutput(job: ProcessingJobRow) {
   }
 
   const source = getVideoRequired(job.source_video_id);
-  const sourceStat = await fs.stat(fullPathForVideo(source));
+  const sourceStat = await statFile(fullPathForVideo(source));
   const currentPath = path.join(rootDirForLibrary("processing"), job.output_relative_path);
   const targetRoot = rootDirForLibrary("processed");
   await fs.mkdir(targetRoot, { recursive: true });

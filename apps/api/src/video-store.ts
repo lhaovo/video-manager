@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { config } from "./config.js";
 import { db } from "./db.js";
-import { moveFile } from "./file-utils.js";
+import { moveFile, statFile } from "./file-utils.js";
 import {
   buildManagedFileName,
   nextAvailablePath,
@@ -86,7 +86,7 @@ export async function renameFileForRule(params: {
   platformNames: string[];
 }) {
   const rootDir = rootDirForLibrary(params.library);
-  const stat = await fs.stat(params.filePath);
+  const stat = await statFile(params.filePath);
 
   if (params.library === "unprocessed") {
     return {
@@ -107,7 +107,7 @@ export async function renameFileForRule(params: {
     await moveFile(params.filePath, targetPath);
   }
 
-  const nextStat = await fs.stat(targetPath);
+  const nextStat = await statFile(targetPath);
   return {
     fullPath: targetPath,
     relativePath: toRelativePath(rootDir, targetPath),
