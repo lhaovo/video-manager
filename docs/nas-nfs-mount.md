@@ -41,11 +41,11 @@ NAS NFS 导出目录：
 ```env
 VIDEO_UNPROCESSED_DIR=/mnt/video-manager/unprocessed
 VIDEO_PROCESSING_DIR=./data/processing
-VIDEO_ARCHIVED_DIR=/mnt/video-manager/archived
+VIDEO_ARCHIVED_DIR=./data/archived
 VIDEO_PROCESSED_DIR=/mnt/video-manager/processed
 ```
 
-注意：`processing` 处理中/待确认结果目录不建议放在 NAS 上，避免转码过程中的临时文件和半成品视频持续触发 NAS 同步。
+注意：`processing` 处理中/待确认结果目录和 `archived` 归档目录不建议放在 NAS 上，避免转码过程中的临时文件、半成品视频和原视频归档持续触发 NAS 同步。
 
 ## 为什么不是直接挂载 video_manager
 
@@ -115,7 +115,6 @@ sudo mount -t nfs -o vers=4.1 192.168.0.109:/fs/1002/nfs /mnt/video-manager-nfs
 
 ```bash
 mkdir -p /mnt/video-manager-nfs/fn_shared/video_manager/unprocessed
-mkdir -p /mnt/video-manager-nfs/fn_shared/video_manager/archived
 mkdir -p /mnt/video-manager-nfs/fn_shared/video_manager/processed
 ```
 
@@ -131,7 +130,7 @@ sudo mount --bind /mnt/video-manager-nfs/fn_shared/video_manager /mnt/video-mana
 findmnt /mnt/video-manager-nfs
 findmnt /mnt/video-manager
 ls -la /mnt/video-manager
-ls -la /mnt/video-manager/unprocessed /mnt/video-manager/archived /mnt/video-manager/processed
+ls -la /mnt/video-manager/unprocessed /mnt/video-manager/processed
 ```
 
 ## 开机自动挂载

@@ -17,6 +17,7 @@ data/*.db-*
 data/*.sqlite
 data/*.sqlite-*
 data/processing/
+data/archived/
 
 # Logs
 logs/

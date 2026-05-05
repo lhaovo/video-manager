@@ -13,7 +13,7 @@ export const config = {
   videoDirs: {
     unprocessed: process.env.VIDEO_UNPROCESSED_DIR ?? "/mnt/video-manager/unprocessed",
     processing: process.env.VIDEO_PROCESSING_DIR ?? path.join(localDataDir, "processing"),
-    archived: process.env.VIDEO_ARCHIVED_DIR ?? "/mnt/video-manager/archived",
+    archived: process.env.VIDEO_ARCHIVED_DIR ?? path.join(localDataDir, "archived"),
     processed: process.env.VIDEO_PROCESSED_DIR ?? "/mnt/video-manager/processed"
   }
 } as const;
