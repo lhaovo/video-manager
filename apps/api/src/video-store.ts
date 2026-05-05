@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { config } from "./config.js";
 import { db } from "./db.js";
-import { moveFile, statFile } from "./file-utils.js";
+import { copyThenRemoveFile, moveFile, statFile } from "./file-utils.js";
 import {
   buildManagedFileName,
   nextAvailablePath,
@@ -104,7 +104,11 @@ export async function renameFileForRule(params: {
   const targetPath = await nextAvailablePath(params.filePath, desiredPath);
 
   if (targetPath !== params.filePath) {
-    await moveFile(params.filePath, targetPath);
+    if (params.library === "processed") {
+      await copyThenRemoveFile(params.filePath, targetPath);
+    } else {
+      await moveFile(params.filePath, targetPath);
+    }
   }
 
   const nextStat = await statFile(targetPath);

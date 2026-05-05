@@ -40,3 +40,10 @@ export async function moveFile(sourcePath: string, targetPath: string) {
     await fs.rm(sourcePath, { force: true });
   }
 }
+
+export async function copyThenRemoveFile(sourcePath: string, targetPath: string) {
+  const stat = await statFile(sourcePath);
+  await fs.copyFile(sourcePath, targetPath);
+  await fs.utimes(targetPath, stat.atime, stat.mtime);
+  await fs.rm(sourcePath, { force: true });
+}

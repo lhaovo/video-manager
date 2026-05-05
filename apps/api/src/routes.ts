@@ -77,8 +77,25 @@ type VsrJob = {
   log?: string[];
 };
 
+type PublicationSnapshot = {
+  published_at: string;
+  note: string;
+};
+
 let queueRunning = false;
 const activeFfmpegProcesses = new Map<number, ReturnType<typeof spawn>>();
+
+function isFileAccessError(error: unknown) {
+  const code = (error as { code?: string }).code;
+  return code === "ENOENT" || code === "ESTALE" || code === "EIO";
+}
+
+function publicationFileErrorResponse(error: unknown) {
+  return {
+    message: "视频文件当前不可访问，发布状态未修改。请检查 NAS 文件后重试。",
+    detail: error instanceof Error ? error.message : String(error)
+  };
+}
 
 async function sendVideoFile(reply: FastifyReply, filePath: string, fileName: string, range?: string, disposition: "inline" | "attachment" = "inline") {
   const stat = await statFile(filePath);
@@ -1231,6 +1248,9 @@ export async function registerRoutes(app: FastifyInstance) {
   app.post("/api/videos/:id/publications", async (request, reply) => {
     const id = parseId((request.params as { id: string }).id);
     const body = z.object({ platformId: z.number().int().positive(), note: z.string().optional() }).parse(request.body);
+    const previous = db
+      .prepare("select published_at, note from video_publications where video_id = ? and platform_id = ?")
+      .get(id, body.platformId) as PublicationSnapshot | undefined;
     db.prepare(
       `
       insert into video_publications (video_id, platform_id, note)
@@ -1238,16 +1258,54 @@ export async function registerRoutes(app: FastifyInstance) {
       on conflict(video_id, platform_id) do update set note = excluded.note
       `
     ).run(id, body.platformId, body.note ?? "");
-    await renameStoredVideo(id);
+    try {
+      await renameStoredVideo(id);
+    } catch (error) {
+      if (previous) {
+        db.prepare("update video_publications set published_at = ?, note = ? where video_id = ? and platform_id = ?").run(
+          previous.published_at,
+          previous.note,
+          id,
+          body.platformId
+        );
+      } else {
+        db.prepare("delete from video_publications where video_id = ? and platform_id = ?").run(id, body.platformId);
+      }
+      if (isFileAccessError(error)) {
+        return reply.code(409).send(publicationFileErrorResponse(error));
+      }
+      throw error;
+    }
     return reply.code(201).send({ ok: true });
   });
 
-  app.delete("/api/videos/:id/publications/:platformId", async (request) => {
+  app.delete("/api/videos/:id/publications/:platformId", async (request, reply) => {
     const params = request.params as { id: string; platformId: string };
     const id = parseId(params.id);
     const platformId = parseId(params.platformId);
+    const previous = db
+      .prepare("select published_at, note from video_publications where video_id = ? and platform_id = ?")
+      .get(id, platformId) as PublicationSnapshot | undefined;
     db.prepare("delete from video_publications where video_id = ? and platform_id = ?").run(id, platformId);
-    await renameStoredVideo(id);
+    try {
+      await renameStoredVideo(id);
+    } catch (error) {
+      if (previous) {
+        db.prepare(
+          `
+          insert into video_publications (video_id, platform_id, published_at, note)
+          values (?, ?, ?, ?)
+          on conflict(video_id, platform_id) do update set
+            published_at = excluded.published_at,
+            note = excluded.note
+          `
+        ).run(id, platformId, previous.published_at, previous.note);
+      }
+      if (isFileAccessError(error)) {
+        return reply.code(409).send(publicationFileErrorResponse(error));
+      }
+      throw error;
+    }
     return { ok: true };
   });
 }
